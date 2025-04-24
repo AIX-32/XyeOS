@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<head>
+    <title>
+        image vieweer
+    </title>
+</head>
+
+<body>
+    <h1>Image Viewer</h1>
+    <input type="file" id="imageUpload" accept="image/*" onchange="loadImage(event)">
+    <img id="imageDisplay" alt="Uploaded Image">
+    </body>
+    <script>
+        function loadImage(event) {
+            var file = event.target.files[0];
+            var reader = new FileReader();
+            reader.onload = function(event) {
+                var img = document.getElementById('imageDisplay');
+                img.src = event.target.result;
+            }
+            reader.readAsDataURL(file);
+        }
+    </script>

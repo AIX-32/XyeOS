@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>XyeOS</title>
+    <meta name="description" content="The better way to use Bloxd Forge">
+    <meta image="https://imghost.net/ib/9g4sU1KafGkkAVR_1742959445.webp">
+    <link rel="icon" type="image/png" href="https://imghost.net/ib/iz7BApifSnTdR0M_1745409278.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #0c0c0c;
+        }
+
+        #background-frame {
+            width: 100%;
+            height: 100%;
+            border: none;
+            z-index: 1;
+            position: absolute;
+        }
+
+        .window {
+            position: absolute;
+            background: #252525;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow: hidden;
+            min-width: 700px;
+            min-height: 400px;
+            width: 900px;  
+            height: 700px; 
+        }
+
+        .window-header {
+            height: 32px;
+            background: #1a1a1a;
+            display: flex;
+            align-items: center;
+            padding: 0 10px;
+            cursor: move;
+            user-select: none;
+            border-bottom: 1px solid #1d1d1d;
+        }
+
+        .close-button {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #ff5f57;
+            margin-right: 8px;
+            cursor: pointer;
+        }
+
+        .set-main-button {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #ffd857;
+            margin-right: 8px;
+            cursor: pointer;
+        }
+
+        .hide-button {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #90ff86;
+            margin-right: 8px;
+            cursor: pointer;
+        }
+
+        .window-content {
+            height: calc(100% - 32px);
+            width: 100%;
+        }
+
+        .window-iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        .window-title {
+            color: #fff;
+        }
+
+        #dock {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #151515;
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 8px;
+            display: flex;
+            gap: 12px;
+            z-index: 1000;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+
+        .dock-app {
+            width: 48px;
+            height: 48px;
+            cursor: pointer;
+            transition: transform 0.2s;
+            background: #202020;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+
+        }
+
+        .dock-app:hover {
+            transform: scale(1.06);
+            outline: 2px solid #ab003e;
+        }
+
+        .dock-app i {
+            color: #d8d1c7;
+            font-size: 20px;
+        }
+
+        .dock-app:first-child {
+            margin-right: 20px;
+            background-color: transparent;
+            box-shadow: none;
+            outline: none;
+            border: none;
+            cursor: default
+
+        }
+
+        .dock-app:last-child {
+            margin-left: 20px;
+        }
+
+        .resize-handle {
+            position: absolute;
+            width: 15px;
+            height: 15px;
+            bottom: 0;
+            right: 0;
+            cursor: nwse-resize;
+            background: transparent;
+        }
+
+        #logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        #folder-menu {
+            position: fixed;
+            left: calc(50% + 270px);
+            bottom: 20px;
+            background: #151515;
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 8px;
+            display: flex;
+            visibility: hidden;
+            gap: 12px;
+            z-index: 1000;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            height: 148px;
+        }
+
+        #folder-menu button {
+            width: 148px;
+            height: 48px;
+            margin: 4px;
+            cursor: pointer;
+            transition: transform 0.2s;
+            background: #202020;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            outline:none;
+            border:none;
+            color: #d8d1c7;
+            font-size: 15px;
+        }
+
+        #folder-menu button:hover {
+            transform: scale(1.06);
+            outline: 2px solid #ab003e;
+        }
+
+        .shop-content {
+            padding: 20px;
+            height: 100%;
+            overflow-y: auto;
+        }
+
+        .app-item {
+            background: #202020;
+            border-radius: 12px;
+            padding: 15px;
+            margin: 10px 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .app-item button {
+            background: #ff6600;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 8px 16px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .app-item button:hover {
+            transform: scale(1.05);
+        }
+
+        #start-menu {
+            position: fixed;
+            bottom: 100px;
+            min-height: 200px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #151515;
+            border-radius: 16px;
+            padding: 20px;
+            display: none;
+            width: 600px;
+            overflow-y: auto;
+            z-index: 999;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+        }
+
+        .app-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            padding: 10px;
+        }
+
+        .app-grid-item {
+            background: #202020;
+            border-radius: 12px;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .app-grid-item:hover {
+            transform: scale(1.05);
+            outline: 2px solid #ab003e;
+        }
+
+        .app-grid-item i {
+            font-size: 24px;
+            color: #d8d1c7;
+            margin-bottom: 8px;
+        }
+
+        .app-grid-item p {
+            margin: 0;
+            color: #d8d1c7;
+            font-size: 14px;
+        }
+
+        .install-app-button {
+            width: 48px;
+            height: 48px;
+            cursor: pointer;
+            transition: transform 0.2s;
+            background: #202020;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            margin-left: 4px;
+        }
+
+        .install-app-button:hover {
+            transform: scale(1.05);
+            outline: 2px solid #ab003e;
+        }
+
+        .app-store-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 16px;
+            padding: 16px;
+        }
+
+        .app-store-item {
+            background: rgba(20, 20, 20, 0.842);
+            border-radius: 8px;
+            padding: 16px;
+            text-align: center;
+            transition: transform 0.2s;
+            cursor: pointer;
+        }
+
+        .app-store-item:hover {
+            transform: scale(1.05);
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .app-store-item i {
+            font-size: 32px;
+            margin-bottom: 8px;
+            color: #ab003e;
+        }
+
+        .app-store-item p {
+            margin: 8px 0;
+            color: white;
+        }
+
+        .install-button {
+            background: #ab003e;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 6px 12px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .install-button:hover {
+            background: #ab003e;
+        }
+    </style>
+</head>
+<body>
+    <iframe id="background-frame" src="./home.html"></iframe>
+
+    <div id="dock">
+        <div class="dock-app" id="logo"><img src="https://imghost.net/ib/iz7BApifSnTdR0M_1745409278.png" alt="Logo"></div>
+        <div class="dock-app" data-url="./apps/files.html"><i class="fa-solid fa-folder"></i></div>
+        <div class="dock-app install-app-button"><i class="fa fa-shop"></i></div>
+    </div>
+
+    <div id="start-menu">
+        <div class="app-grid">
+            
+        </div>
+    </div>
+
+    <script>
+
+        document.addEventListener('contextmenu', e => e.preventDefault());
+        let zIndex = 2;
+        let isDragging = false;
+        let isResizing = false;
+        let currentWindow = null;
+        let startX, startY, startWidth, startHeight;
+
+        let hiddenWindows = new Map();
+        let installedApps = [];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadFromLocalStorage();
+        });
+
+        function saveToLocalStorage() {
+
+            localStorage.setItem('xyleOS_installedApps', JSON.stringify(installedApps));
+
+            const dockItems = [];
+            document.querySelectorAll('.dock-app:not(#logo):not(.install-app-button)').forEach(item => {
+                if (item.dataset.url) {
+                    const icon = item.querySelector('i')?.className || '';
+                    dockItems.push({
+                        url: item.dataset.url,
+                        icon: icon
+                    });
+                }
+            });
+            localStorage.setItem('xyleOS_dockItems', JSON.stringify(dockItems));
+        }
+
+        function loadFromLocalStorage() {
+
+            const savedApps = localStorage.getItem('xyleOS_installedApps');
+            if (savedApps) {
+                installedApps = JSON.parse(savedApps);
+
+                installedApps.forEach(app => {
+                    addAppToStartMenu(app, false); 
+                });
+            }
+
+            const savedDockItems = localStorage.getItem('xyleOS_dockItems');
+            if (savedDockItems) {
+                const dockItems = JSON.parse(savedDockItems);
+
+                const dock = document.getElementById('dock');
+                const dockAppElements = Array.from(document.querySelectorAll('.dock-app:not(#logo):not(.install-app-button)'));
+                dockAppElements.forEach(item => item.remove());
+
+                const installButton = document.querySelector('.install-app-button');
+                dockItems.forEach(item => {
+                    addAppToDock(item, false); 
+                });
+            }
+        }
+
+        function addAppToDock(app, shouldSave = true) {
+            const dock = document.getElementById('dock');
+            const dockApp = document.createElement('div');
+            dockApp.className = 'dock-app';
+            dockApp.dataset.url = app.url;
+            dockApp.innerHTML = `<i class="${app.icon}"></i>`;
+
+            dock.insertBefore(dockApp, document.querySelector('.install-app-button'));
+
+            dockApp.addEventListener('click', () => {
+                const hiddenWindow = hiddenWindows.get(dockApp.dataset.url);
+                if (hiddenWindow) {
+                    hiddenWindow.style.display = 'block';
+                    dockApp.style.borderBottom = 'none';
+                    hiddenWindows.delete(dockApp.dataset.url);
+                } else {
+                    createWindow(dockApp.dataset.url);
+                }
+            });
+
+            if (shouldSave) {
+                saveToLocalStorage();
+            }
+        }
+
+        document.getElementById('logo').addEventListener('click', () => {
+            const startMenu = document.getElementById('start-menu');
+            startMenu.style.display = startMenu.style.display === 'none' ? 'block' : 'none';
+        });
+
+        const appStoreWindow = document.createElement('div');
+        appStoreWindow.className = 'window';
+        appStoreWindow.style.display = 'none';
+        appStoreWindow.innerHTML = `
+            <div class="window-header">
+                <div class="close-button"></div>
+            </div>
+            <div class="window-content">
+                <div class="app-store-grid"></div>
+            </div>
+            <div class="resize-handle"></div>
+        `;
+        document.body.appendChild(appStoreWindow);
+
+        const appStoreHeader = appStoreWindow.querySelector('.window-header');
+        let isDraggingStore = false;
+        let storeStartX, storeStartY;
+
+        appStoreHeader.addEventListener('mousedown', (e) => {
+            isDraggingStore = true;
+            storeStartX = e.clientX - appStoreWindow.offsetLeft;
+            storeStartY = e.clientY - appStoreWindow.offsetTop;
+            appStoreWindow.style.zIndex = ++zIndex;
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (isDraggingStore) {
+                appStoreWindow.style.left = (e.clientX - storeStartX) + 'px';
+                appStoreWindow.style.top = (e.clientY - storeStartY) + 'px';
+            }
+        });
+
+        document.addEventListener('mouseup', () => {
+            isDraggingStore = false;
+        });
+
+        document.querySelector('.install-app-button').addEventListener('click', () => {
+            appStoreWindow.style.display = 'block';
+            appStoreWindow.style.zIndex = ++zIndex;
+            loadAvailableApps();
+        });
+
+        async function loadAvailableApps() {
+            const appStoreGrid = appStoreWindow.querySelector('.app-store-grid');
+            appStoreGrid.innerHTML = '';
+
+            const apps = [
+                {
+                    name: 'Image Viewer',
+                    icon: 'fas fa-image',
+                    url: '/apps/imageviewer.html'
+                },
+                {
+                    name: 'File Explorer',
+                    icon: 'fas fa-folder',
+                    url: '/files.html'
+                },
+                {
+                    name: 'Text Editor',
+                    icon: 'fas fa-edit',
+                    url: '/apps/editor.html'
+                },
+                {
+                    name: 'Calculator',
+                    icon: 'fas fa-calculator',
+                    url: '/apps/calculator.html'
+                },
+                {
+                    name: 'Settings',
+                    icon: 'fas fa-cog',
+                    url: '/apps/settings.html'
+                },
+                {
+                    name: 'Photo editor',
+                    icon: 'fas fa-camera',
+                    url: '/apps/photo-editor.html'
+                },
+                {
+                    name: 'Calendar',
+                    icon: 'fas fa-calendar',
+                    url: '/apps/calendar.html'
+                },
+                {
+                    name: 'Osu!',
+                    icon: 'fas fa-circle',
+                    url: '/apps/osu.html'
+                },
+                {
+                    name: 'Video editor!',
+                    icon: 'fas fa-video',
+                    url: '/apps/video-editor.html'
+                },
+                {
+                    name: 'Browser',
+                    icon: 'fas fa-globe',
+                    url: '/apps/browser.html'
+                }
+
+            ];
+
+            apps.forEach(app => {
+
+                const isInstalled = installedApps.some(installedApp => 
+                    installedApp.url === app.url && installedApp.name === app.name
+                );
+
+                const appElement = document.createElement('div');
+                appElement.className = 'app-store-item';
+                appElement.innerHTML = `
+                    <i class="${app.icon}"></i>
+                    <p>${app.name}</p>
+                    <button class="install-button">${isInstalled ? 'Installed' : 'Install'}</button>
+                `;
+
+                const installButton = appElement.querySelector('.install-button');
+
+                if (isInstalled) {
+                    installButton.disabled = true;
+                    installButton.style.backgroundColor = '#666';
+                } else {
+                    installButton.addEventListener('click', () => {
+                        if (!isInstalled) {
+                            installedApps.push(app);
+                            addAppToStartMenu(app, true);
+                            installButton.textContent = 'Installed';
+                            installButton.disabled = true;
+                            installButton.style.backgroundColor = '#666';
+                        }
+                    });
+                }
+
+                appStoreGrid.appendChild(appElement);
+            });
+        }
+
+        appStoreWindow.querySelector('.close-button').addEventListener('click', () => {
+            appStoreWindow.style.display = 'none';
+            appStoreWindow.style.left = `${(window.innerWidth - 900) / 2}px`;
+            appStoreWindow.style.top = `${(window.innerHeight - 700) / 2}px`;
+        });
+
+        function addAppToStartMenu(app, shouldSave = true) {
+            const appGrid = document.querySelector('.app-grid');
+            const appElement = document.createElement('div');
+            appElement.className = 'app-grid-item';
+            appElement.draggable = true;
+            appElement.innerHTML = `
+                <i class="${app.icon}"></i>
+                <p>${app.name}</p>
+            `;
+
+            appElement.addEventListener('contextmenu', (e) => {
+                e.preventDefault();
+                if (confirm(`Do you want to delete ${app.name}?`)) {
+                    appElement.remove();
+                    const index = installedApps.findIndex(a => a.name === app.name);
+                    if (index > -1) {
+                        installedApps.splice(index, 1);
+                        saveToLocalStorage();
+                    }
+                }
+            });
+
+            appElement.addEventListener('dragstart', (e) => {
+                e.dataTransfer.setData('text/plain', JSON.stringify(app));
+            });
+
+            appElement.addEventListener('click', () => {
+                const hiddenWindow = hiddenWindows.get(app.url);
+                if (hiddenWindow) {
+                    hiddenWindow.style.display = 'block';
+                    hiddenWindows.delete(app.url);
+                } else {
+                    createWindow(app.url);
+                }
+                document.getElementById('start-menu').style.display = 'none';
+            });
+
+            appGrid.appendChild(appElement);
+
+            if (shouldSave) {
+                saveToLocalStorage();
+            }
+        }
+
+        const dock = document.getElementById('dock');
+        dock.addEventListener('dragover', (e) => {
+            e.preventDefault();
+        });
+
+        dock.addEventListener('drop', (e) => {
+            e.preventDefault();
+            const app = JSON.parse(e.dataTransfer.getData('text/plain'));
+
+            const existingDockApp = Array.from(document.querySelectorAll('.dock-app')).find(
+                item => item.dataset.url === app.url
+            );
+
+            if (!existingDockApp) {
+                addAppToDock(app, true);
+            }
+        });
+
+        document.querySelectorAll('.dock-app:not(#logo):not(:last-child)').forEach(item => {
+            item.addEventListener('click', () => {
+                const hiddenWindow = hiddenWindows.get(item.dataset.url);
+                if (hiddenWindow) {
+                    hiddenWindow.style.display = 'block';
+                    item.style.borderBottom = 'none';
+                    hiddenWindows.delete(item.dataset.url);
+                } else {
+                    createWindow(item.dataset.url);
+                }
+            });
+        });
+
+        function createWindow(url) {
+            const window = document.createElement('div');
+            window.className = 'window';
+            window.style.left = `${(document.documentElement.clientWidth - 900) / 2}px`;
+            window.style.top = `${(document.documentElement.clientHeight - 700) / 2}px`;
+            window.style.zIndex = zIndex++;
+
+            const windowId = `window-${Date.now()}`;
+
+            window.innerHTML = `
+                <div class="window-header">
+                    <div class="close-button"></div>
+                    <div class="set-main-button"></div>
+                    <div class="hide-button"></div>
+                </div>
+                <div class="window-content">
+                    <iframe class="window-iframe" src="${url}"></iframe>
+                </div>
+                <div class="resize-handle"></div>
+            `;
+
+            document.body.appendChild(window);
+
+            const header = window.querySelector('.window-header');
+            const closeButton = window.querySelector('.close-button');
+            const setMainButton = window.querySelector('.set-main-button');
+            const resizeHandle = window.querySelector('.resize-handle');
+            const hideButton = window.querySelector('.hide-button');
+            const dockItem = Array.from(document.querySelectorAll('.dock-app')).find(item => item.dataset.url === url);
+
+            closeButton.addEventListener('click', () => {
+                window.remove();
+                if (dockItem) {
+                    dockItem.style.borderBottom = 'none';
+                    hiddenWindows.delete(url);
+                }
+            });
+
+            setMainButton.addEventListener('click', () => {
+                const backgroundFrame = document.getElementById('background-frame');
+                const windowIframe = window.querySelector('.window-iframe');
+                if (backgroundFrame && windowIframe) {
+                    backgroundFrame.src = windowIframe.src;
+                    window.remove();
+                    if (dockItem) {
+                        dockItem.style.borderBottom = 'none';
+                        hiddenWindows.delete(url);
+                    }
+                }
+            });
+
+            hideButton.addEventListener('click', () => {
+                window.style.display = 'none';
+                if (dockItem) {
+                    dockItem.style.borderBottom = '2px solid #ab003e';
+                    hiddenWindows.set(url, window);
+                }
+            });
+            header.addEventListener('mousedown', startDrag);
+            resizeHandle.addEventListener('mousedown', startResize);
+
+            function startDrag(e) {
+                isDragging = true;
+                currentWindow = window;
+                startX = e.clientX;
+                startY = e.clientY;
+                const rect = window.getBoundingClientRect();
+                window.offsetX = startX - rect.left;
+                window.offsetY = startY - rect.top;
+                window.style.cursor = 'move';
+                window.style.zIndex = zIndex++;
+
+                document.addEventListener('mousemove', drag);
+                document.addEventListener('mouseup', stopDrag);
+            }
+
+            function drag(e) {
+                if (!isDragging) return;
+                window.style.left = `${e.clientX - window.offsetX}px`;
+                window.style.top = `${e.clientY - window.offsetY}px`;
+            }
+
+            function stopDrag() {
+                isDragging = false;
+                currentWindow = null;
+                document.removeEventListener('mousemove', drag);
+                document.removeEventListener('mouseup', stopDrag);
+            }
+
+            function startResize(e) {
+                isResizing = true;
+                currentWindow = window;
+                startX = e.clientX;
+                startY = e.clientY;
+                startWidth = parseInt(window.style.width || window.offsetWidth);
+                startHeight = parseInt(window.style.height || window.offsetHeight);
+
+                document.addEventListener('mousemove', resize);
+                document.addEventListener('mouseup', stopResize);
+            }
+
+            function resize(e) {
+                if (!isResizing) return;
+                const newWidth = startWidth + (e.clientX - startX);
+                const newHeight = startHeight + (e.clientY - startY);
+                window.style.width = `${Math.max(newWidth, 700)}px`;
+                window.style.height = `${Math.max(newHeight, 400)}px`;
+            }
+
+            function stopResize() {
+                isResizing = false;
+                currentWindow = null;
+                document.removeEventListener('mousemove', resize);
+                document.removeEventListener('mouseup', stopResize);
+            }
+        }
+
+        let isDockHidden = false;
+        function hidedock() {
+            const dock = document.getElementById('dock');
+            const folderButton = document.querySelector('.extra-dock-app[onclick="foldermenu()"]');
+            const extraDock = document.getElementById('extra-dock');
+            if (isDockHidden) {
+                dock.style.display = 'flex';
+                folderButton.style.display = 'flex';
+                extraDock.style.transform = 'scale(1)';
+                isDockHidden = false;
+            } else {
+                dock.style.display = 'none';
+                folderButton.style.display = 'none';
+                extraDock.style.transform = 'scale(0.8)';
+                isDockHidden = true;
+            }
+        }
+
+        let isFolderHidden = false;
+        function foldermenu() {
+            const folderMenu = document.getElementById('folder-menu');
+            if (isFolderHidden) {
+                folderMenu.style.display = 'block'; 
+                isFolderHidden = false;
+            } else {
+                folderMenu.style.display = 'none'; 
+                isFolderHidden = true;
+            }
+        }
+
+        function resetiframe(url) {
+            const backgroundFrame = document.getElementById('background-frame');
+            if (url) {
+                backgroundFrame.src = url;
+            } else {
+                backgroundFrame.src = backgroundFrame.src;
+            }
+            resetiframe('https://www.bloxdforge.com/app/assets/1page.html');
+        }
+    </script>
+</body>
+</html>

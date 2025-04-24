@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XyeOS Screen</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        :root {
+            --primary-bg: #0c0c0c;
+            --secondary-bg: #1d1d1d;
+            --accent: #ab003e;
+            --text-primary: #d8d1c7;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            background-image: url('https://imghost.net/ib/FftqLNbrP4tQ22B_1745410582.png');
+            background-size: cover;
+            background-position: center;
+            color: var(--text-primary);
+            font-family: 'Segoe UI', system-ui;
+        }
+
+        .status-bar {
+            position: relative;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 20px 18px;
+            background: var(--secondary-bg);
+            font-size: 14px;
+            z-index: 1;
+            overflow: visible;
+            border-radius: 0 0 25px 25px;
+            box-shadow: 0 15px 25px rgba(0,0,0,0.2);
+            margin-left: 20px;
+            margin-right: 20px;
+        }
+
+        .status-right {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .battery,
+        .wifi-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="status-bar">
+        <span id="time">Loading...</span>
+        <div class="status-right">
+            <div class="wifi-status">
+                <i class="fas fa-wifi" id="wifi-icon"></i>
+                <span id="wifi-type">Checking...</span>
+            </div>
+            <div class="battery">
+                <i class="fas fa-battery-full"></i>
+                <span id="battery-level">100%</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function updateTime() {
+            const options = { hour: '2-digit', minute: '2-digit' };
+            document.getElementById('time').textContent = 
+                new Date().toLocaleTimeString('en-US', options);
+        }
+
+        function updateBattery() {
+            if ('getBattery' in navigator) {
+                navigator.getBattery().then(battery => {
+                    const level = Math.floor(battery.level * 100);
+                    document.getElementById('battery-level').textContent = `${level}%`;
+                });
+            }
+        }
+
+        function updateWifiStatus() {
+            const icon = document.getElementById('wifi-icon');
+            const typeText = document.getElementById('wifi-type');
+
+            if (navigator.onLine) {
+                icon.className = 'fas fa-wifi';
+                if ('connection' in navigator) {
+                    const type = navigator.connection.effectiveType || 'unknown';
+                    typeText.textContent = type.toUpperCase();
+                } else {
+                    typeText.textContent = 'Online';
+                }
+            } else {
+                icon.className = 'fas fa-wifi-slash';
+                typeText.textContent = 'Offline';
+            }
+        }
+
+        updateTime();
+        updateBattery();
+        updateWifiStatus();
+        
+        setInterval(updateTime, 1000);
+        setInterval(updateBattery, 60000);
+        setInterval(updateWifiStatus, 10000);
+
+        window.addEventListener('online', updateWifiStatus);
+        window.addEventListener('offline', updateWifiStatus);
+    </script>
+</body>
+</html>

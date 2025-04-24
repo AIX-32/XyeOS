@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Text Editor</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #202020;
+            color: #d8d1c7;
+        }
+
+        .editor-container {
+            display: flex;
+            flex-direction: column;
+            height: calc(100vh - 40px);
+            background: #151515;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+        }
+
+        .toolbar {
+            display: flex;
+            gap: 10px;
+            padding: 10px;
+            background: #1d1d1d;
+        }
+
+        .toolbar button {
+            background: #202020;
+            border: none;
+            color: #d8d1c7;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .toolbar button:hover {
+            background: #404040;
+        }
+
+        .toolbar select {
+            background: #202020;
+            border: none;
+            color: #d8d1c7;
+            padding: 8px;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .editor-wrapper {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+        }
+
+        #editor {
+            flex: 1;
+            padding: 20px;
+            background: #202020;
+            color: #d8d1c7;
+            border: none;
+            resize: none;
+            font-family: 'Consolas', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            tab-size: 4;
+        }
+
+        #editor:focus {
+            outline: none;
+        }
+
+        .line-numbers {
+            padding: 20px 10px;
+            background: #151515;
+            color: #666;
+            text-align: right;
+            font-family: 'Consolas', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            user-select: none;
+            border-right: 1px solid #1d1d1d;
+        }
+
+        .status-bar {
+            padding: 5px 10px;
+            background: #1d1d1d;
+            color: #666;
+            font-size: 12px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 12px;
+            height: 12px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #151515;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #404040;
+            border-radius: 6px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #4a4a4a;
+        }
+    </style>
+</head>
+<body>
+    <div class="editor-container">
+        <div class="toolbar">
+            <button onclick="newFile()"><i class="fas fa-file"></i> New</button>
+            <button onclick="openFile()"><i class="fas fa-folder-open"></i> Open</button>
+            <button onclick="saveFile()"><i class="fas fa-save"></i> Save</button>
+            <select id="languageSelect" onchange="updateSyntaxHighlighting()">
+                <option value="text">Plain Text</option>
+                <option value="javascript">JavaScript</option>
+                <option value="html">HTML</option>
+                <option value="css">CSS</option>
+                <option value="python">Python</option>
+            </select>
+        </div>
+        <div class="editor-wrapper">
+            <div class="line-numbers" id="lineNumbers"></div>
+            <textarea id="editor" spellcheck="false" wrap="off"></textarea>
+        </div>
+        <div class="status-bar">
+            <span id="cursorPosition">Line: 1, Column: 1</span>
+            <span id="fileInfo">New File</span>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+    <script>
+        const editor = document.getElementById('editor');
+        const lineNumbers = document.getElementById('lineNumbers');
+        const cursorPosition = document.getElementById('cursorPosition');
+        const fileInfo = document.getElementById('fileInfo');
+        let currentFile = null;
+
+        function updateLineNumbers() {
+            const lines = editor.value.split('\n').length;
+            lineNumbers.innerHTML = Array.from({ length: lines }, (_, i) => i + 1).join('\n');
+        }
+
+        function updateCursorPosition() {
+            const text = editor.value;
+            const pos = editor.selectionStart;
+            const lines = text.substr(0, pos).split('\n');
+            const line = lines.length;
+            const column = lines[lines.length - 1].length + 1;
+            cursorPosition.textContent = `Line: ${line}, Column: ${column}`;
+        }
+
+        function updateSyntaxHighlighting() {
+            const language = document.getElementById('languageSelect').value;
+            const code = editor.value;
+            // Here you would typically update syntax highlighting
+            // For a production environment, you'd want to use a more robust solution
+        }
+
+        editor.addEventListener('input', () => {
+            updateLineNumbers();
+            updateSyntaxHighlighting();
+        });
+
+        editor.addEventListener('keydown', (e) => {
+            if (e.key === 'Tab') {
+                e.preventDefault();
+                const start = editor.selectionStart;
+                const end = editor.selectionEnd;
+                editor.value = editor.value.substring(0, start) + '    ' + editor.value.substring(end);
+                editor.selectionStart = editor.selectionEnd = start + 4;
+            }
+        });
+
+        editor.addEventListener('scroll', () => {
+            lineNumbers.scrollTop = editor.scrollTop;
+        });
+
+        editor.addEventListener('click', updateCursorPosition);
+        editor.addEventListener('keyup', updateCursorPosition);
+
+        function newFile() {
+            if (confirm('Create new file? Any unsaved changes will be lost.')) {
+                editor.value = '';
+                currentFile = null;
+                fileInfo.textContent = 'New File';
+                updateLineNumbers();
+                updateSyntaxHighlighting();
+            }
+        }
+
+        function openFile() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.txt,.js,.html,.css,.py';
+            input.onchange = e => {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = e => {
+                        editor.value = e.target.result;
+                        currentFile = file;
+                        fileInfo.textContent = file.name;
+                        updateLineNumbers();
+                        updateSyntaxHighlighting();
+                    };
+                    reader.readAsText(file);
+                }
+            };
+            input.click();
+        }
+
+        function saveFile() {
+            const content = editor.value;
+            const blob = new Blob([content], { type: 'text/plain' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = currentFile ? currentFile.name : 'untitled.txt';
+            a.click();
+            URL.revokeObjectURL(a.href);
+        }
+
+        // Initialize
+        updateLineNumbers();
+    </script>
+</body>
+</html>

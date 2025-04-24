@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Browser</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #202020;
+            color: #d8d1c7;
+        }
+
+        .browser-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            background: #151515;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+        }
+
+        .tabs {
+            display: flex;
+            background: #1d1d1d;
+            padding: 5px 5px 0;
+            gap: 5px;
+            overflow-x: auto;
+            scrollbar-width: thin;
+        }
+
+        .tabs::-webkit-scrollbar {
+            height: 5px;
+        }
+
+        .tabs::-webkit-scrollbar-thumb {
+            background: #444;
+            border-radius: 5px;
+        }
+
+        .tab {
+            background: #202020;
+            border: none;
+            color: #666;
+            padding: 8px 25px 8px 16px;
+            border-radius: 8px 8px 0 0;
+            cursor: pointer;
+            position: relative;
+            min-width: 100px;
+            max-width: 200px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            flex-shrink: 0;
+        }
+
+        .tab.active {
+            background: #151515;
+            color: #d8d1c7;
+        }
+
+        .tab .close-tab {
+            position: absolute;
+            right: 5px;
+            top: 50%;
+            transform: translateY(-50%);
+            padding: 3px;
+            border-radius: 50%;
+            font-size: 12px;
+        }
+
+        .tab .close-tab:hover {
+            background: #404040;
+        }
+
+        .new-tab-btn {
+            background: transparent;
+            border: none;
+            color: #666;
+            padding: 8px;
+            cursor: pointer;
+            border-radius: 8px;
+            flex-shrink: 0;
+        }
+
+        .new-tab-btn:hover {
+            background: #202020;
+        }
+
+        .toolbar {
+            display: flex;
+            gap: 10px;
+            padding: 10px;
+            background: #1d1d1d;
+            align-items: center;
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 5px;
+        }
+
+        .nav-btn {
+            background: #202020;
+            border: none;
+            color: #d8d1c7;
+            padding: 8px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .nav-btn:hover {
+            background: #404040;
+        }
+
+        .nav-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .address-bar {
+            flex: 1;
+            display: flex;
+            background: #202020;
+            border-radius: 8px;
+            padding: 8px;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .address-bar input {
+            flex: 1;
+            background: none;
+            border: none;
+            color: #d8d1c7;
+            font-size: 14px;
+            outline: none;
+        }
+
+        .bookmark-btn {
+            background: none;
+            border: none;
+            color: #666;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 50%;
+        }
+
+        .bookmark-btn:hover {
+            color: #d8d1c7;
+            background: #404040;
+        }
+
+        .bookmark-btn.active {
+            color: #ab003e;
+        }
+
+        .browser-content {
+            flex: 1;
+            background: #fff;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .tab-content {
+            width: 100%;
+            height: 100%;
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        .bookmarks-bar {
+            display: none;
+            padding: 8px;
+            background: #1d1d1d;
+            gap: 10px;
+            overflow-x: auto;
+            flex-wrap: nowrap;
+            scrollbar-width: thin;
+        }
+
+        .bookmarks-bar::-webkit-scrollbar {
+            height: 5px;
+        }
+
+        .bookmarks-bar::-webkit-scrollbar-thumb {
+            background: #444;
+            border-radius: 5px;
+        }
+
+        .bookmarks-bar.visible {
+            display: flex;
+        }
+
+        .bookmark {
+            display: flex;
+            align-items: center;
+            background: #202020;
+            border: none;
+            color: #d8d1c7;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 180px;
+            flex-shrink: 0;
+            gap: 5px;
+        }
+
+        .bookmark:hover {
+            background: #404040;
+        }
+
+        .bookmark .favicon {
+            width: 16px;
+            height: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .bookmark .remove-bookmark {
+            margin-left: 5px;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .bookmark:hover .remove-bookmark {
+            opacity: 1;
+        }
+
+        .empty-bookmarks-message {
+            color: #666;
+            padding: 5px 10px;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="browser-container">
+        <div class="tabs" id="tabsContainer">
+            <button class="new-tab-btn" id="newTabBtn"><i class="fas fa-plus"></i></button>
+        </div>
+        <div class="toolbar">
+            <div class="nav-buttons">
+                <button class="nav-btn" id="backBtn"><i class="fas fa-arrow-left"></i></button>
+                <button class="nav-btn" id="forwardBtn"><i class="fas fa-arrow-right"></i></button>
+                <button class="nav-btn" id="refreshBtn"><i class="fas fa-redo"></i></button>
+            </div>
+            <div class="address-bar">
+                <i class="fas fa-lock" style="color: #666;"></i>
+                <input type="text" id="urlInput" placeholder="Enter URL or search...">
+                <button class="bookmark-btn" id="bookmarkBtn"><i class="fas fa-star"></i></button>
+            </div>
+        </div>
+        <div class="bookmarks-bar" id="bookmarksBar">
+            <div class="empty-bookmarks-message">No bookmarks yet. Star a page to add it here.</div>
+        </div>
+        <div class="browser-content" id="browserContent">
+            <!-- Tab contents will be created dynamically -->
+        </div>
+    </div>
+
+    <script>
+        const tabsContainer = document.getElementById('tabsContainer');
+        const newTabBtn = document.getElementById('newTabBtn');
+        const backBtn = document.getElementById('backBtn');
+        const forwardBtn = document.getElementById('forwardBtn');
+        const refreshBtn = document.getElementById('refreshBtn');
+        const urlInput = document.getElementById('urlInput');
+        const bookmarkBtn = document.getElementById('bookmarkBtn');
+        const bookmarksBar = document.getElementById('bookmarksBar');
+        const browserContent = document.getElementById('browserContent');
+
+        // Store tabs data
+        const tabs = [];
+        let activeTabId = null;
+        
+        // Bookmarks storage
+        let bookmarks = [];
+        let bookmarksVisible = false;
+
+        // Tab Management
+        function createNewTab() {
+            const tabId = 'tab-' + Date.now();
+            
+            // Create tab button
+            const tab = document.createElement('button');
+            tab.className = 'tab';
+            tab.setAttribute('data-tab-id', tabId);
+            tab.textContent = 'New Tab';
+            
+            const closeBtn = document.createElement('span');
+            closeBtn.className = 'close-tab';
+            closeBtn.innerHTML = '<i class="fas fa-times"></i>';
+            closeBtn.onclick = (e) => {
+                e.stopPropagation();
+                closeTab(tabId);
+            };
+            
+            tab.appendChild(closeBtn);
+            
+            // Add click event to activate tab
+            tab.onclick = () => activateTab(tabId);
+            
+            // Insert before the new tab button
+            tabsContainer.insertBefore(tab, newTabBtn);
+            
+            // Create tab content (iframe container)
+            const tabContent = document.createElement('div');
+            tabContent.className = 'tab-content';
+            tabContent.id = tabId;
+            
+            const iframe = document.createElement('iframe');
+            iframe.src = 'about:blank';
+            tabContent.appendChild(iframe);
+            
+            browserContent.appendChild(tabContent);
+            
+            // Store tab data
+            tabs.push({
+                id: tabId,
+                title: 'New Tab',
+                url: 'about:blank',
+                element: tab,
+                contentElement: tabContent,
+                iframe: iframe
+            });
+            
+            // Activate the new tab
+            activateTab(tabId);
+            
+            return tabId;
+        }
+
+        function activateTab(tabId) {
+            // Deactivate all tabs
+            tabs.forEach(tab => {
+                tab.element.classList.remove('active');
+                tab.contentElement.classList.remove('active');
+            });
+            
+            // Activate the selected tab
+            const tab = tabs.find(t => t.id === tabId);
+            if (tab) {
+                tab.element.classList.add('active');
+                tab.contentElement.classList.add('active');
+                activeTabId = tabId;
+                
+                // Update URL input
+                urlInput.value = tab.url !== 'about:blank' ? tab.url : '';
+                
+                // Update bookmark button state
+                updateBookmarkButtonState();
+            }
+        }
+
+        function closeTab(tabId) {
+            const tabIndex = tabs.findIndex(t => t.id === tabId);
+            if (tabIndex !== -1) {
+                // Remove DOM elements
+                tabs[tabIndex].element.remove();
+                tabs[tabIndex].contentElement.remove();
+                
+                // Remove from tabs array
+                tabs.splice(tabIndex, 1);
+                
+                // If we closed the active tab, activate another one
+                if (activeTabId === tabId && tabs.length > 0) {
+                    // Activate the tab to the left or the first tab
+                    const newActiveIndex = Math.max(0, tabIndex - 1);
+                    activateTab(tabs[newActiveIndex].id);
+                } else if (tabs.length === 0) {
+                    // If no tabs left, create a new one
+                    createNewTab();
+                }
+            }
+        }
+
+        function updateTabInfo(tabId, url, title) {
+            const tab = tabs.find(t => t.id === tabId);
+            if (tab) {
+                tab.url = url;
+                
+                // Get a clean title or use hostname
+                let displayTitle = title;
+                if (!displayTitle || displayTitle === '') {
+                    try {
+                        const urlObj = new URL(url);
+                        displayTitle = urlObj.hostname || 'New Tab';
+                    } catch (e) {
+                        displayTitle = 'New Tab';
+                    }
+                }
+                
+                tab.title = displayTitle;
+                
+                // Update tab button text
+                const closeBtn = tab.element.querySelector('.close-tab');
+                tab.element.textContent = tab.title;
+                tab.element.appendChild(closeBtn);
+                
+                // Update bookmark button state
+                if (tabId === activeTabId) {
+                    updateBookmarkButtonState();
+                }
+            }
+        }
+
+        // Navigation
+        urlInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && activeTabId) {
+                let url = urlInput.value.trim();
+                
+                if (url === '') return;
+                
+                // Add protocol if missing
+                if (url && !url.startsWith('http://') && !url.startsWith('https://')) {
+                    url = 'https://' + url;
+                }
+                
+                const activeTab = tabs.find(t => t.id === activeTabId);
+                if (activeTab) {
+                    activeTab.iframe.src = url;
+                    updateTabInfo(activeTabId, url);
+                }
+            }
+        });
+
+        backBtn.onclick = () => {
+            const activeTab = tabs.find(t => t.id === activeTabId);
+            if (activeTab) {
+                try {
+                    activeTab.iframe.contentWindow.history.back();
+                } catch (e) {
+                    console.log("Cannot access history: ", e);
+                }
+            }
+        };
+
+        forwardBtn.onclick = () => {
+            const activeTab = tabs.find(t => t.id === activeTabId);
+            if (activeTab) {
+                try {
+                    activeTab.iframe.contentWindow.history.forward();
+                } catch (e) {
+                    console.log("Cannot access history: ", e);
+                }
+            }
+        };
+
+        refreshBtn.onclick = () => {
+            const activeTab = tabs.find(t => t.id === activeTabId);
+            if (activeTab) {
+                activeTab.iframe.contentWindow.location.reload();
+            }
+        };
+
+        // Bookmarks functionality
+        function toggleBookmarksBar() {
+            bookmarksVisible = !bookmarksVisible;
+            bookmarksBar.classList.toggle('visible', bookmarksVisible);
+            bookmarkBtn.classList.toggle('active', bookmarksVisible);
+        }
+
+        function getCurrentUrl() {
+            const activeTab = tabs.find(t => t.id === activeTabId);
+            return activeTab ? activeTab.url : null;
+        }
+
+        function getCurrentTitle() {
+            const activeTab = tabs.find(t => t.id === activeTabId);
+            return activeTab ? activeTab.title : null;
+        }
+
+        function isCurrentPageBookmarked() {
+            const url = getCurrentUrl();
+            return url && bookmarks.some(b => b.url === url);
+        }
+
+        function updateBookmarkButtonState() {
+            bookmarkBtn.classList.toggle('active', isCurrentPageBookmarked());
+        }
+
+        function toggleBookmark() {
+            const url = getCurrentUrl();
+            const title = getCurrentTitle();
+            
+            if (!url || url === 'about:blank') return;
+            
+            const isBookmarked = isCurrentPageBookmarked();
+            
+            if (isBookmarked) {
+                // Remove bookmark
+                bookmarks = bookmarks.filter(b => b.url !== url);
+            } else {
+                // Add bookmark
+                let hostname = '';
+                try {
+                    hostname = new URL(url).hostname;
+                } catch (e) {
+                    hostname = url;
+                }
+                
+                bookmarks.push({
+                    url: url,
+                    title: title || hostname,
+                    favicon: getFaviconForUrl(url)
+                });
+            }
+            
+            updateBookmarkButtonState();
+            renderBookmarks();
+            
+            // Make sure bookmarks are visible when adding a new one
+            if (!isBookmarked && !bookmarksVisible) {
+                toggleBookmarksBar();
+            }
+        }
+
+        function getFaviconForUrl(url) {
+            try {
+                const urlObj = new URL(url);
+                return `${urlObj.protocol}//${urlObj.hostname}/favicon.ico`;
+            } catch (e) {
+                return null;
+            }
+        }
+
+        function renderBookmarks() {
+            // Clear current bookmarks
+            bookmarksBar.innerHTML = '';
+            
+            if (bookmarks.length === 0) {
+                const emptyMessage = document.createElement('div');
+                emptyMessage.className = 'empty-bookmarks-message';
+                emptyMessage.textContent = 'No bookmarks yet. Star a page to add it here.';
+                bookmarksBar.appendChild(emptyMessage);
+                return;
+            }
+            
+            // Add each bookmark
+            bookmarks.forEach((bookmark, index) => {
+                const bookmarkElement = document.createElement('button');
+                bookmarkElement.className = 'bookmark';
+                
+                // Add favicon or fallback icon
+                const favicon = document.createElement('span');
+                favicon.className = 'favicon';
+                
+                if (bookmark.favicon) {
+                    const img = document.createElement('img');
+                    img.src = bookmark.favicon;
+                    img.width = 16;
+                    img.height = 16;
+                    img.onerror = function() {
+                        this.remove();
+                        favicon.innerHTML = '<i class="fas fa-globe"></i>';
+                    };
+                    favicon.appendChild(img);
+                } else {
+                    favicon.innerHTML = '<i class="fas fa-globe"></i>';
+                }
+                
+                bookmarkElement.appendChild(favicon);
+                
+                // Add title
+                const titleSpan = document.createElement('span');
+                titleSpan.textContent = bookmark.title || 'Bookmark';
+                bookmarkElement.appendChild(titleSpan);
+                
+                // Add remove button
+                const removeBtn = document.createElement('span');
+                removeBtn.className = 'remove-bookmark';
+                removeBtn.innerHTML = '<i class="fas fa-times"></i>';
+                removeBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    bookmarks.splice(index, 1);
+                    renderBookmarks();
+                    updateBookmarkButtonState();
+                };
+                bookmarkElement.appendChild(removeBtn);
+                
+                // Add click event to navigate
+                bookmarkElement.onclick = () => {
+                    navigateToUrl(bookmark.url);
+                };
+                
+                bookmarksBar.appendChild(bookmarkElement);
+            });
+        }
+
+        function navigateToUrl(url) {
+            if (!url) return;
+            
+            const activeTab = tabs.find(t => t.id === activeTabId);
+            if (activeTab) {
+                activeTab.iframe.src = url;
+                updateTabInfo(activeTabId, url);
+                urlInput.value = url;
+            }
+        }
+
+        // Event Listeners
+        newTabBtn.onclick = createNewTab;
+        bookmarkBtn.onclick = toggleBookmark;
+        
+        // Listen for iframe load events to update tab title
+        document.addEventListener('DOMNodeInserted', (event) => {
+            if (event.target.tagName === 'IFRAME') {
+                event.target.onload = function() {
+                    const tabContent = this.parentElement;
+                    const tabId = tabContent.id;
+                    
+                    try {
+                        const url = this.contentWindow.location.href;
+                        
+                        // Try to get the title from iframe
+                        let title;
+                        try {
+                            title = this.contentWindow.document.title;
+                        } catch (e) {
+                            // In case of cross-origin restrictions
+                            const urlObj = new URL(url);
+                            title = urlObj.hostname;
+                        }
+                        
+                        updateTabInfo(tabId, url, title);
+                        
+                        // Update URL input if this is the active tab
+                        if (tabId === activeTabId) {
+                            urlInput.value = url !== 'about:blank' ? url : '';
+                        }
+                    } catch (e) {
+                        console.log("Error updating tab info:", e);
+                    }
+                };
+            }
+        });
+
+        // Initialize
+        renderBookmarks();
+        createNewTab();
+    </script>
+</body>
+</html>
